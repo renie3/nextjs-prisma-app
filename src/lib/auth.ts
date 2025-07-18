@@ -3,6 +3,9 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
+import Credentials from "next-auth/providers/credentials";
+import { loginSchema } from "./validationSchemas";
+import bcrypt from "bcryptjs";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -16,6 +19,35 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID as string,
       clientSecret: process.env.AUTH_GOOGLE_SECRET as string,
+    }),
+    Credentials({
+      authorize: async (credentials) => {
+        try {
+          const parsedCredentials = loginSchema.safeParse(credentials);
+          if (!parsedCredentials.success) {
+            console.log(parsedCredentials.error.flatten().fieldErrors);
+            return null;
+          }
+
+          const { username, password } = parsedCredentials.data;
+
+          const user = await prisma.user.findUnique({
+            where: { username },
+          });
+          if (!user || !user.password) throw new Error("Wrong credentials!");
+
+          const isPasswordCorrect = await bcrypt.compare(
+            password,
+            user.password
+          );
+          if (!isPasswordCorrect) throw new Error("Wrong credentials!");
+
+          return user;
+        } catch (error) {
+          console.log(error);
+          return null;
+        }
+      },
     }),
   ],
   callbacks: {

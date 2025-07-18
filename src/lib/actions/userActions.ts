@@ -3,7 +3,8 @@
 import { signIn, signOut } from "@/lib/auth";
 import { prisma } from "../prisma";
 import bcrypt from "bcryptjs";
-import { RegisterSchema } from "../validationSchemas";
+import { LoginSchema, RegisterSchema } from "../validationSchemas";
+import { AuthError } from "next-auth";
 
 export const handleGoogleLogin = async () => {
   await signIn("google", { redirectTo: "/" });
@@ -73,5 +74,33 @@ export const register = async (
       success: false,
       message: "Something went wrong",
     };
+  }
+};
+
+export const login = async (
+  previousState: { success: boolean; message: string },
+  data: LoginSchema
+) => {
+  const { username, password } = data;
+
+  try {
+    await signIn("credentials", { username, password, redirectTo: "/" });
+    return {
+      success: true,
+      message: "Login successful",
+    };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return {
+            success: false,
+            message: "Invalid Credentials",
+          };
+        default:
+          return { success: false, message: "Something went wrong" };
+      }
+    }
+    throw error;
   }
 };
