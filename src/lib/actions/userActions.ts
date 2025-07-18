@@ -1,9 +1,9 @@
 "use server";
 
-import { signIn, signOut } from "@/lib/auth";
+import { auth, signIn, signOut } from "@/lib/auth";
 import { prisma } from "../prisma";
 import bcrypt from "bcryptjs";
-import { LoginSchema, RegisterSchema } from "../validationSchemas";
+import { LoginSchema, RegisterSchema, UserSchema } from "../validationSchemas";
 import { AuthError } from "next-auth";
 
 export const handleGoogleLogin = async () => {
@@ -102,5 +102,56 @@ export const login = async (
       }
     }
     throw error;
+  }
+};
+
+export const updateUser = async (
+  previousState: { success: boolean; message: string },
+  data: UserSchema
+) => {
+  const { id, username, email, name, password, image, isAdmin } = data;
+
+  const session = await auth();
+  if (!id && !session?.user?.id) {
+    return {
+      success: false,
+      message: "Not Authorized",
+    };
+  }
+
+  try {
+    const updateFields: { [key: string]: string | boolean | undefined } = {
+      username,
+      email,
+      name,
+      password,
+      image,
+      isAdmin: isAdmin === "true",
+    };
+
+    // remove empty or undefined values
+    Object.keys(updateFields).forEach(
+      (key) =>
+        (updateFields[key] === "" || updateFields[key] === undefined) &&
+        delete updateFields[key]
+    );
+
+    // hash password if it exist
+    if (password) {
+      updateFields.password = await bcrypt.hash(password, 10);
+    }
+
+    await prisma.user.update({
+      where: { id: id || session!.user.id },
+      data: updateFields,
+    });
+
+    return { success: true, message: "User has been updated" };
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      message: "Something went wrong",
+    };
   }
 };
