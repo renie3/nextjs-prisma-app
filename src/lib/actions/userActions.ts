@@ -155,3 +155,84 @@ export const updateUser = async (
     };
   }
 };
+
+export const createUser = async (
+  previousState: { success: boolean; message: string },
+  data: RegisterSchema
+) => {
+  const { username, email, name, password, image, isAdmin } = data;
+
+  try {
+    const existingUsername = await prisma.user.findUnique({
+      where: { username },
+    });
+    if (existingUsername) {
+      return {
+        success: false,
+        message: "Username already exists",
+      };
+    }
+
+    const existingEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (existingEmail) {
+      return {
+        success: false,
+        message: "Email already exists",
+      };
+    }
+
+    const existingName = await prisma.user.findUnique({
+      where: { name },
+    });
+    if (existingName) {
+      return {
+        success: false,
+        message: "Name already exists",
+      };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.create({
+      data: {
+        username,
+        name,
+        email,
+        password: hashedPassword,
+        image,
+        isAdmin: isAdmin === "true",
+      },
+    });
+
+    return { success: true, message: "User has been created" };
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      message: "Something went wrong",
+    };
+  }
+};
+
+export const deleteUser = async (
+  previousState: { success: boolean; message: string },
+  formData: FormData
+) => {
+  const id = formData.get("id") as string;
+
+  try {
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return { success: true, message: "User has been deleted" };
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      message: "Something went wrong",
+    };
+  }
+};

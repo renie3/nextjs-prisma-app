@@ -6,19 +6,31 @@ import { toast } from "react-toastify";
 import { deletePost } from "@/lib/actions/postActions";
 import CreatePostForm from "./forms/CreatePostForm";
 import UpdatePostForm from "./forms/UpdatePostForm";
-import { Post } from "@prisma/client";
+import { Post, User } from "@prisma/client";
+import { deleteUser } from "@/lib/actions/userActions";
+import CreateUserForm from "./forms/CreateUserForm";
+import UpdateUserForm from "./forms/UpdateUserForm";
 
-const FormModal = ({
-  table,
-  type,
-  data,
-  id,
-}: {
-  table: "post";
-  type: "create" | "update" | "delete";
-  data?: Post;
-  id?: string;
-}) => {
+type FormModalProps =
+  | {
+      table: "post";
+      type: "create" | "update" | "delete";
+      data?: Post;
+      id?: string;
+    }
+  | {
+      table: "user";
+      type: "create" | "update" | "delete";
+      data?: User;
+      id?: string;
+    };
+
+const deleteActionMap = {
+  post: deletePost,
+  user: deleteUser,
+};
+
+const FormModal = ({ table, type, data, id }: FormModalProps) => {
   const [open, setOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement | null>(null);
 
@@ -47,10 +59,13 @@ const FormModal = ({
   }, [open]);
 
   const Form = () => {
-    const [state, formAction, isPending] = useActionState(deletePost, {
-      success: false,
-      message: "",
-    });
+    const [state, formAction, isPending] = useActionState(
+      deleteActionMap[table],
+      {
+        success: false,
+        message: "",
+      }
+    );
 
     const router = useRouter();
 
@@ -95,6 +110,11 @@ const FormModal = ({
       return <CreatePostForm setOpen={setOpen} />;
     if (type === "update" && table === "post" && data)
       return <UpdatePostForm setOpen={setOpen} post={data} />;
+
+    if (type === "create" && table === "user")
+      return <CreateUserForm setOpen={setOpen} />;
+    if (type === "update" && table === "user" && data)
+      return <UpdateUserForm setOpen={setOpen} user={data} />;
 
     return null;
   };
