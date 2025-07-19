@@ -13,3 +13,5 @@ export const links: LinkType[] = [
     path: "/popular",
   },
 ];
+
+export const ITEM_PER_PAGE = 12;
