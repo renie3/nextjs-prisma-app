@@ -28,16 +28,16 @@ const Posts = async ({
     };
   }
 
-  //   const orderBy: Prisma.PostOrderByWithRelationInput =
-  //     sort === "popular"
-  //       ? { visit: Prisma.SortOrder.desc }
-  //       : { createdAt: Prisma.SortOrder.desc };
+  const orderBy: Prisma.PostOrderByWithRelationInput =
+    sort === "popular"
+      ? { visit: Prisma.SortOrder.desc }
+      : { createdAt: Prisma.SortOrder.desc };
 
   const [posts, totalPosts]: [Post[], number] = await prisma.$transaction([
     prisma.post.findMany({
       where: query,
-      orderBy: sort === "popular" ? { visit: "desc" } : { createdAt: "desc" },
-      //   orderBy,
+      //   orderBy: sort === "popular" ? { visit: "desc" } : { createdAt: "desc" },
+      orderBy,
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (page - 1),
     }),
