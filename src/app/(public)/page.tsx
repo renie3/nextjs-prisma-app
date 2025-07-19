@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Posts from "@/components/Posts";
+import FeaturedPosts from "@/components/FeaturedPosts";
 
 const categories = [
   { label: "All", value: "" },
@@ -37,6 +38,7 @@ const HomePage = async ({
         ))}
       </div>
       <Posts page={page} category={category} />
+      <FeaturedPosts />
     </div>
   );
 };
