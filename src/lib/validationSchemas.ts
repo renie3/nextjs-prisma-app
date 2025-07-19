@@ -89,3 +89,16 @@ export const userSchema = (isCredentials: boolean) =>
   });
 
 export type UserSchema = z.infer<ReturnType<typeof userSchema>>;
+
+export const postSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().trim().min(1, { message: "Title is required" }),
+  desc: z.string().trim().min(1, { message: "Desc is required" }),
+  category: z.enum(["general", "technology", "health", "sports", "education"], {
+    message: "Category is required",
+  }),
+  isFeatured: z.enum(["true", "false"]),
+  img: z.string().optional(),
+});
+
+export type PostSchema = z.infer<typeof postSchema>;
